@@ -1,0 +1,117 @@
+﻿@page "/Detalle/Index"
+@using Eddian_Vasquez_Ap1_P2.Components.Pages.Models
+
+<PageTitle>Consulta de Registros</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white text-center py-3">
+            <h3 class="card-title fw-bold mb-0">
+                <i class="bi bi-journal-text me-2"></i> Consulta de Registros
+            </h3>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="filterBy" class="form-label fw-semibold">
+                        <i class="bi bi-funnel me-1"></i> Filtrar por
+                    </label>
+                    <InputSelect id="filterBy" class="form-select form-select-sm" @bind-Value="Filtro">
+                        <option value="" disabled selected>Elija una opción</option>
+                        <option value="Id">Id</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="searchQuery" class="form-label fw-semibold">
+                        <i class="bi bi-search me-1"></i> Búsqueda
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <input id="searchQuery" class="form-control" @bind="ValorFiltro" placeholder="Buscar..." />
+                        <button type="button" class="btn btn-outline-primary" @onclick="Buscar">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-5 d-flex justify-content-end align-items-center">
+                    <a href="/Ticket/Create" class="btn btn-success">
+                        <i class="bi bi-plus-circle-fill me-1"></i> Crear
+                    </a>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 offset-md-3">
+                    <label for="startDate" class="form-label fw-semibold">
+                        <i class="bi bi-calendar-range me-1"></i> Desde
+                    </label>
+                    <InputDate id="startDate" @bind-Value="FechaInicio" class="form-control form-control-sm" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label fw-semibold">
+                        <i class="bi bi-calendar-range me-1"></i> Hasta
+                    </label>
+                    <InputDate id="endDate" @bind-Value="FechaFin" class="form-control form-control-sm" />
+                </div>
+            </div>
+
+            ---
+
+            <table class="table table-hover">
+                <thead class="table table-striped text-black">
+                    <tr>
+                        <th>Id</th>
+                    </tr>
+                </thead>
+            </table>
+
+            ---
+
+            <div class="row mt-4 justify-content-end g-3">
+                <div class="col-auto">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-list-ol me-1"></i> Conteo
+                    </label>
+                    <input type="text" class="form-control text-center" value="@Registro.Count" readonly />
+                </div>
+                <div class="col-auto">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-cash me-1"></i> Total
+                    </label>
+                    <input type="text" class="form-control text-end" value="$1,500.00" readonly />
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Detalles> Registro { get; set; } = new();
+    public string Filtro { get; set; } = string.Empty;
+    public string ValorFiltro { get; set; } = string.Empty;
+    public DateOnly? FechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Now.AddMonths(-1));
+    public DateOnly? FechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+
+    protected override void OnInitialized()
+    {
+        Registro = new List<Detalles>
+        {
+            new Detalles { /* populate properties */ },
+            new Detalles { /* populate properties */ }
+        };
+    }
+
+    private void Buscar()
+    {
+        Console.WriteLine($"Searching with Filter: {Filtro}, Value: {ValorFiltro}, From: {FechaInicio}, To: {FechaFin}");
+    }
+
+    public class Detalles
+    {
+        public int Id { get; set; }
+    }
+}
