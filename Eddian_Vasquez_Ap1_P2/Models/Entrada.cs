@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 using System.ComponentModel.DataAnnotations;
 
 namespace Eddian_Vasquez_Ap1_p2.Models
