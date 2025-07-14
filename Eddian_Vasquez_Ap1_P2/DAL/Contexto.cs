@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Eddian_Vasquez_Ap1_p2.Models;
+using Eddian_Vasquez_Ap1_P2.Models;
 
 namespace Re.Context
 {
