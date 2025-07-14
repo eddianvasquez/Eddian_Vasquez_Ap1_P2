@@ -1,29 +1,31 @@
-﻿
+﻿using Eddian_Vasquez_Ap1_P2.Models;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Eddian_Vasquez_Ap1_p2.Models
 {
-    public class Entradas
+    public class Entrada
     {
         [Key]
         public int EntradaId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "La Fecha es obligatoria.")]
         public DateTime Fecha { get; set; }
 
-        [Required]
-        [StringLength(200)]
+        [Required(ErrorMessage = "El Concepto es obligatorio.")]
+        [StringLength(200, ErrorMessage = "El Concepto no puede exceder los 200 caracteres.")]
         public string Concepto { get; set; } = string.Empty;
 
-        [Required]
-        [Range(0, double.MaxValue, ErrorMessage = "El peso debe ser positivo")]
+
+        [Required(ErrorMessage = "El Peso Total es obligatorio.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El Peso Total debe ser mayor a cero.")]
         public double PesoTotal { get; set; }
 
-        [Required]
-        public int IdProducido { get; set; }
 
-        [Required]
-        [Range(0, double.MaxValue, ErrorMessage = "La cantidad debe ser positiva")]
-        public double CantidadProducida { get; set; }
+        public ICollection<EntradaDetalle> ProductosUtilizados { get; set; } = new List<EntradaDetalle>();
+
+
+        public ICollection<EntradaDetalle> ProductosProducidos { get; set; } = new List<EntradaDetalle>();
     }
 }
