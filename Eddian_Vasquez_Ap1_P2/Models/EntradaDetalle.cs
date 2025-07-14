@@ -1,59 +1,31 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Eddian_Vasquez_Ap1_p2.Contexto;
-using Eddian_Vasquez_Ap1_p2.Models;
-using System.Linq.Expressions;
-using static Eddian_Vasquez_Ap1_P2.Components.Pages.VentasPages.Index;
+﻿using Eddian_Vasquez_Ap1_p2.Models;
 
-namespace Eddian_Vasquez_Ap1_p2.Services
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Eddian_Vasquez_Ap1_P2.Models
 {
-    public class EntradaDetalleServices(IDbContextFactory<Contexto> DbFactory)
+    public class EntradaDetalle
     {
-        // Listar todos los detalles según criterio
-        public async Task<List<Detalle>> Listar(Expression<Func<Detalle, bool>> criterio)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            return await contexto.Detalles
-                .Include(d => d.Producto)
-                .AsNoTracking()
-                .Where(criterio)
-                .ToListAsync();
-        }
+        [Key]
+        public int EntradaDetalleId { get; set; }
 
-        // Eliminar un detalle por ID
-        public async Task<bool> Eliminar(int detalleId)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            var detalle = await contexto.Detalles
-                .Include(d => d.Producto)
-                .FirstOrDefaultAsync(d => d.DetalleId == detalleId);
 
-            if (detalle != null)
-            {
-                contexto.Detalles.Remove(detalle);
-                await contexto.SaveChangesAsync();
-                return true;
-            }
-            return false;
-        }
+        [Required(ErrorMessage = "El ID de la Entrada es obligatorio.")]
+        public int EntradaId { get; set; }
 
-        // Agregar un nuevo detalle
-        public async Task<bool> Agregar(Detalle detalle)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            await contexto.Detalles.AddAsync(detalle);
-            await contexto.SaveChangesAsync();
-            return true;
-        }
+        [ForeignKey("EntradaId")]
+        public virtual Entrada? Entrada { get; set; }
 
-        // Obtener un detalle por ID
-        public async Task<Detalle?> Buscar(int detalleId)
-        {
-            await using var contexto = await DbFactory.CreateDbContextAsync();
-            return await contexto.Detalles
-                .Include(d => d.Producto)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DetalleId == detalleId);
-        }
+
+        [Required(ErrorMessage = "El ID del Producto es obligatorio.")]
+        public int ProductoId { get; set; }
+
+        [ForeignKey("ProductoId")]
+        public virtual Producto? Producto { get; set; }
+
+        [Required(ErrorMessage = "La Cantidad es obligatoria.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "La Cantidad debe ser mayor a cero.")]
+        public double Cantidad { get; set; }
     }
 }
-
