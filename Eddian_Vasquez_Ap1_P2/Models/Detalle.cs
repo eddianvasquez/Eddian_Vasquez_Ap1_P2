@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Eddian_Vasquez_Ap1_P2.Components.Pages.Models
+namespace Eddian_Vasquez_Ap1_P2.Models
 {
     public class Detalle
     {

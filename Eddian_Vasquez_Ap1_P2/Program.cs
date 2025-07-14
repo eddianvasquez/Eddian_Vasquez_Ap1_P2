@@ -1,7 +1,7 @@
 using Blazored.Toast;
 using Eddian_Vasquez_Ap1_P2.Components;
-using Eddian_Vasquez_Ap1_P2.Components.Pages.DAL;
-using Eddian_Vasquez_Ap1_P2.Components.Pages.services;
+using Eddian_Vasquez_Ap1_P2.DAL;
+using Eddian_Vasquez_Ap1_P2.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
