@@ -1,5 +1,4 @@
 ﻿@page "/Entradas/EntradaIndex"
-@using Eddian_Vasquez_Ap1_P2.Services
 @using Eddian_Vasquez_Ap1_p2.Models
 @using Eddian_Vasquez_Ap1_p2.Services
 @inject EntradasServices entradasservices
@@ -69,8 +68,6 @@
                             <th>Fecha</th>
                             <th>Concepto</th>
                             <th class="text-end pe-4">Peso Total</th>
-                            <th>Id Producido</th>
-                            <th class="text-end">Cantidad Producida</th>
                             <th class="text-center">Editar</th>
                         </tr>
                     </thead>
@@ -84,8 +81,6 @@
                                     <td>@entrada.Fecha.ToString("dd/MM/yyyy")</td>
                                     <td>@entrada.Concepto</td>
                                     <td class="text-end pe-4">@entrada.PesoTotal.ToString("N2")</td>
-                                    <td>@entrada.IdProducido</td>
-                                    <td class="text-end">@entrada.CantidadProducida.ToString("N2")</td>
                                     <td class="text-center">
                                         <a href="/Entradas/EditEntradas/@entrada.EntradaId" class="btn btn-outline-primary">
                                             <i class="bi bi-pencil-square"></i>
@@ -97,7 +92,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="7" class="text-center">No hay entradas registradas.</td>
+                                <td colspan="5" class="text-center">No hay entradas registradas.</td>
                             </tr>
                         }
                     </tbody>
@@ -119,8 +114,8 @@
 </div>
 
 @code {
-    public List<Entradas> entradas { get; set; } = new();
-    public List<Entradas> entradasFiltradas { get; set; } = new();
+    public List<Entrada> entradas { get; set; } = new();
+    public List<Entrada> entradasFiltradas { get; set; } = new();
 
     public string MetodoBusqueda { get; set; } = "Id";
     public int BusquedaId { get; set; }
@@ -135,7 +130,7 @@
     protected override async Task OnInitializedAsync()
     {
         entradas = await entradasservices.Listar(e => e.EntradaId > 0);
-        entradasFiltradas = new List<Entradas>(entradas);
+        entradasFiltradas = new List<Entrada>(entradas);
         CalcularResumen();
     }
 
