@@ -1,8 +1,7 @@
 using Blazored.Toast;
-using Eddian_Vasquez_Ap1_p2.Services;
+using Eddian_Vasquez_Ap1_P2.Services;
 using Eddian_Vasquez_Ap1_P2.Components;
-using Eddian_Vasquez_Ap1_P2.Contexto;
-
+using Eddian_Vasquez_Ap1_P2.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,12 +9,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("SqlConStr");
 
+
 builder.Services.AddScoped<EntradasServices>();
+
 
 builder.Services.AddDbContextFactory<Contexto>(options =>
     options.UseSqlServer(connectionString));
 
+
 builder.Services.AddBlazoredToast();
+
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -30,8 +33,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAntiforgery();
-
 app.MapStaticAssets();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
