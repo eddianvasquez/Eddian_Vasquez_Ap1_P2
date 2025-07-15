@@ -16,14 +16,14 @@ namespace Eddian_Vasquez_Ap1_P2.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Relación: Entrada tiene muchos detalles
+          
             modelBuilder.Entity<Entrada>()
                 .HasMany(e => e.Detalles)
                 .WithOne(d => d.Entrada)
                 .HasForeignKey(d => d.EntradaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Productos de ejemplo
+           
             modelBuilder.Entity<Producto>().HasData(new List<Producto>
             {
                 new Producto
