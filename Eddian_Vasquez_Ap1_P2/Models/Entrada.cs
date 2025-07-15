@@ -1,5 +1,4 @@
-﻿using Eddian_Vasquez_Ap1_P2.Models;
-using System;
+﻿using Eddian_Vasquez_Ap1_p2.Models;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -18,10 +17,9 @@ namespace Eddian_Vasquez_Ap1_p2.Models
         public string Concepto { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El Peso Total es obligatorio.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "El Peso Total debe ser mayor a cero.")]
+        [Range(0.0, double.MaxValue, ErrorMessage = "El Peso Total no puede ser negativo.")]
         public double PesoTotal { get; set; }
 
-       
-        public ICollection<EntradaDetalle> Detalles { get; set; } = new List<EntradaDetalle>();
+        public ICollection<EntradaDetalle> Detalle { get; set; } = new List<EntradaDetalle>();
     }
 }

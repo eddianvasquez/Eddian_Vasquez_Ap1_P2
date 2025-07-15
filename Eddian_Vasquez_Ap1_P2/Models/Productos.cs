@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Eddian_Vasquez_Ap1_P2.Models
+namespace Eddian_Vasquez_Ap1_p2.Models
 {
     public class Producto
     {
