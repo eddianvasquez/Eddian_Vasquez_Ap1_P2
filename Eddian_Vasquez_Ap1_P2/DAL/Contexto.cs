@@ -2,7 +2,7 @@
 using Eddian_Vasquez_Ap1_P2.Models;
 using Eddian_Vasquez_Ap1_p2.Models;
 
-namespace Eddian_Vasquez_Ap1_P2.Contexto
+namespace Eddian_Vasquez_Ap1_P2.Data 
 {
     public class Contexto : DbContext
     {
@@ -16,14 +16,14 @@ namespace Eddian_Vasquez_Ap1_P2.Contexto
         {
             base.OnModelCreating(modelBuilder);
 
-            // ✅ Relación única: Entrada tiene muchos Detalles
+            // Relación: Entrada tiene muchos detalles
             modelBuilder.Entity<Entrada>()
                 .HasMany(e => e.Detalles)
                 .WithOne(d => d.Entrada)
                 .HasForeignKey(d => d.EntradaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ✅ Productos de ejemplo
+            // Productos de ejemplo
             modelBuilder.Entity<Producto>().HasData(new List<Producto>
             {
                 new Producto
