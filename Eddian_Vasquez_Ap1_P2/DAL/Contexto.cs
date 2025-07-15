@@ -1,24 +1,61 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Eddian_Vasquez_Ap1_P2.Models;
+using Eddian_Vasquez_Ap1_p2.Models;
 
-namespace Re.Context
+namespace Eddian_Vasquez_Ap1_P2.Contexto
 {
     public class Contexto : DbContext
     {
         public Contexto(DbContextOptions<Contexto> options) : base(options) { }
 
-        public DbSet<Entradas> Entradas { get; set; }
-        public DbSet<Productos> Productos { get; set; }
+        public DbSet<Entrada> Entradas { get; set; }
+        public DbSet<EntradaDetalle> EntradaDetalles { get; set; }
+        public DbSet<Producto> Productos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Productos>().HasData(new List<Productos>
+            
+            modelBuilder.Entity<Entrada>()
+                .HasMany(e => e.ProductosUtilizados)
+                .WithOne(d => d.Entrada)
+                .HasForeignKey(d => d.EntradaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Entrada>()
+                .HasMany(e => e.ProductosProducidos)
+                .WithOne(d => d.Entrada)
+                .HasForeignKey(d => d.EntradaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+           
+            modelBuilder.Entity<Producto>().HasData(new List<Producto>()
             {
-                new Productos { ProductoId = 1, Nombre = "Maní", Peso = 5 },
-                new Productos { ProductoId = 2, Nombre = "Almendra", Peso = 10 },
-                new Productos { ProductoId = 3, Nombre = "Pistacho", Peso = 15 }
+                new Producto()
+                {
+                    ProductoId = 1,
+                    Descripcion = "Maní",
+                    Peso = 5.0,
+                    Existencia = 0,
+                    EsCompuesto = false
+                },
+                new Producto()
+                {
+                    ProductoId = 2,
+                    Descripcion = "Pistacho",
+                    Peso = 10.0,
+                    Existencia = 0,
+                    EsCompuesto = false
+                },
+                new Producto()
+                {
+                    ProductoId = 3,
+                    Descripcion = "Almendra",
+                    Peso = 15.0,
+                    Existencia = 0,
+                    EsCompuesto = false
+                }
             });
         }
     }
