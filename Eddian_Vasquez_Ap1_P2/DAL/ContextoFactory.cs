@@ -10,7 +10,7 @@ public class ContextoFactory : IDesignTimeDbContextFactory<Contexto>
         {
             var optionsBuilder = new DbContextOptionsBuilder<Contexto>();
 
-            optionsBuilder.UseSqlServer("workstation id=vamosapasar.mssql.somee.com;packet size=4096;user id=pollito_SQLLogin_1;pwd=6jmfstvuoj;data source=vamosapasar.mssql.somee.com;persist security info=False;initial catalog=vamosapasar;TrustServerCertificate=True");
+            optionsBuilder.UseSqlServer("workstation id=vamosdios.mssql.somee.com;packet size=4096;user id=pollito_SQLLogin_1;pwd=6jmfstvuoj;data source=vamosdios.mssql.somee.com;persist security info=False;initial catalog=vamosdios;TrustServerCertificate=True");
 
             return new Contexto(optionsBuilder.Options);
         }

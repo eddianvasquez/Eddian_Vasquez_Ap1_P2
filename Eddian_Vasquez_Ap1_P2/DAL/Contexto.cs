@@ -16,23 +16,17 @@ namespace Eddian_Vasquez_Ap1_P2.Contexto
         {
             base.OnModelCreating(modelBuilder);
 
-            
+            // ✅ Relación única: Entrada tiene muchos Detalles
             modelBuilder.Entity<Entrada>()
-                .HasMany(e => e.ProductosUtilizados)
+                .HasMany(e => e.Detalles)
                 .WithOne(d => d.Entrada)
                 .HasForeignKey(d => d.EntradaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Entrada>()
-                .HasMany(e => e.ProductosProducidos)
-                .WithOne(d => d.Entrada)
-                .HasForeignKey(d => d.EntradaId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-           
-            modelBuilder.Entity<Producto>().HasData(new List<Producto>()
+            // ✅ Productos de ejemplo
+            modelBuilder.Entity<Producto>().HasData(new List<Producto>
             {
-                new Producto()
+                new Producto
                 {
                     ProductoId = 1,
                     Descripcion = "Maní",
@@ -40,7 +34,7 @@ namespace Eddian_Vasquez_Ap1_P2.Contexto
                     Existencia = 0,
                     EsCompuesto = false
                 },
-                new Producto()
+                new Producto
                 {
                     ProductoId = 2,
                     Descripcion = "Pistacho",
@@ -48,7 +42,7 @@ namespace Eddian_Vasquez_Ap1_P2.Contexto
                     Existencia = 0,
                     EsCompuesto = false
                 },
-                new Producto()
+                new Producto
                 {
                     ProductoId = 3,
                     Descripcion = "Almendra",
