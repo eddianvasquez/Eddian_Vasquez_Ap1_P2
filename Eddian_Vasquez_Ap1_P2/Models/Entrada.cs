@@ -17,15 +17,11 @@ namespace Eddian_Vasquez_Ap1_p2.Models
         [StringLength(200, ErrorMessage = "El Concepto no puede exceder los 200 caracteres.")]
         public string Concepto { get; set; } = string.Empty;
 
-
         [Required(ErrorMessage = "El Peso Total es obligatorio.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "El Peso Total debe ser mayor a cero.")]
         public double PesoTotal { get; set; }
 
-
-        public ICollection<EntradaDetalle> ProductosUtilizados { get; set; } = new List<EntradaDetalle>();
-
-
-        public ICollection<EntradaDetalle> ProductosProducidos { get; set; } = new List<EntradaDetalle>();
+       
+        public ICollection<EntradaDetalle> Detalles { get; set; } = new List<EntradaDetalle>();
     }
 }
