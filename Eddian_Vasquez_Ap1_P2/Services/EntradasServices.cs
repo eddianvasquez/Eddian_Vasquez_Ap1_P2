@@ -34,9 +34,9 @@ namespace Eddian_Vasquez_Ap1_p2.Services
         public async Task<Entrada?> Buscar(int id)
         {
             return await _context.Entradas
-                                 .Include(e => e.Detalle)
-                                 .ThenInclude(d => d.Producto)
-                                 .FirstOrDefaultAsync(e => e.EntradaId == id);
+                      .Include(e => e.Detalle)
+                      .ThenInclude(d => d.Producto)
+                      .FirstOrDefaultAsync(e => e.EntradaId == id);
         }
 
         public async Task<bool> Eliminar(int id)
@@ -51,15 +51,13 @@ namespace Eddian_Vasquez_Ap1_p2.Services
             return await _context.SaveChangesAsync() > 0;
         }
 
-        // Método 'Listar' con la firma corregida
-        // Ahora acepta una Expression<Func<Entrada, bool>> para que la consulta sea traducida a SQL
-        public async Task<List<Entrada>> Listar(Expression<Func<Entrada, bool>> criterio)
+        public async Task<List<Entrada>> Listar(Expression<Func<Entrada, bool>> criterio)
         {
             return await _context.Entradas
-                                 .Include(e => e.Detalle)
-                                 .ThenInclude(d => d.Producto)
-                                 .Where(criterio)
-                                 .ToListAsync();
+                      .Include(e => e.Detalle)
+                      .ThenInclude(d => d.Producto)
+                      .Where(criterio)
+                      .ToListAsync();
         }
     }
 }
