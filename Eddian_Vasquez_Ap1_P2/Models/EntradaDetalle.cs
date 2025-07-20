@@ -15,7 +15,7 @@ namespace Eddian_Vasquez_Ap1_p2.Models
 
         public int ProductoId { get; set; }
         [ForeignKey("ProductoId")]
-        public Producto? Producto { get; set; } // <--- ¡Esto debe ser 'Producto' y no 'object' o algo similar!
+        public Producto? Producto { get; set; } 
 
         [Required(ErrorMessage = "La Cantidad es obligatoria.")]
         [Range(1, int.MaxValue, ErrorMessage = "La Cantidad debe ser al menos 1.")]
