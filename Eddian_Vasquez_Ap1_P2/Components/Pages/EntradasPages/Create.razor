@@ -24,7 +24,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
-                            <InputDate class="form-control" @bind-Value="Entrada.Fecha" id="fechaInput"></InputDate>
+                            <InputDate class="form-control" @bind-Value="Entrada.Fecha" @onchange="HandleFechaChange" id="fechaInput"></InputDate>
                             <label for="fechaInput">Fecha</label>
                             <ValidationMessage For="(() => Entrada.Fecha)" class="text-danger" />
                         </div>
@@ -42,7 +42,6 @@
                     <InputNumber @bind-Value="Entrada.EntradaId" class="form-control" readonly id="entradaIdInput"></InputNumber>
                     <label for="entradaIdInput">Entrada Id</label>
                 </div>
-
 
                 <hr class="my-4">
 
@@ -65,7 +64,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-floating">
-                                <InputNumber class="form-control" @bind-Value="NuevaEntradaDetalle.Cantidad" placeholder="Cantidad" id="cantidadInput"></InputNumber>
+                                <InputNumber class="form-control" @bind-Value="NuevaEntradaDetalle.Cantidad" @oninput="OnCantidadInput" placeholder="Cantidad" id="cantidadInput"></InputNumber>
                                 <label for="cantidadInput">Cantidad</label>
                                 <ValidationMessage For="(() => NuevaEntradaDetalle.Cantidad)" class="text-danger" />
                             </div>
@@ -95,7 +94,6 @@
                                         <tr class="text-center">
                                             <td>@(detalle.Producto?.Descripcion ?? "Desconocido")</td>
                                             <td>@detalle.Cantidad</td>
-                                            
                                             <td>@(((double)detalle.Cantidad * detalle.PesoEntrada / 1000.0).ToString("N2"))</td>
                                             <td>
                                                 <button type="button" @onclick="() => RemoverDetalle(detalle)" class="btn btn-outline-danger btn-sm">
@@ -138,14 +136,75 @@
     public EntradaDetalle NuevaEntradaDetalle { get; set; } = new EntradaDetalle();
     public List<Producto> ProductosDisponibles { get; set; } = new List<Producto>();
 
+    private static readonly DateTime MinDateAllowed = new DateTime(2010, 1, 1);
+    private const int MaxCantidad = 750;
+
     protected override async Task OnInitializedAsync()
     {
-        
         ProductosDisponibles = await productosService.Listar(p => true);
-        Entrada.Fecha = DateTime.Now;
 
-        
+        if (DateTime.Now < MinDateAllowed)
+        {
+            Entrada.Fecha = MinDateAllowed;
+        }
+        else
+        {
+            Entrada.Fecha = DateTime.Now;
+        }
+
         ResetearDetalle();
+    }
+
+    private void HandleFechaChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime selectedDate))
+        {
+            if (selectedDate < MinDateAllowed)
+            {
+                Entrada.Fecha = DateTime.Now;
+                toastService.ShowWarning("La fecha no puede ser anterior al 1 de enero de 2010. Se ha establecido la fecha del día de hoy.");
+            }
+            else
+            {
+                Entrada.Fecha = selectedDate;
+            }
+        }
+        else
+        {
+            Entrada.Fecha = DateTime.Now;
+            toastService.ShowError("Fecha inválida. Se ha establecido la fecha del día de hoy.");
+        }
+        StateHasChanged();
+    }
+
+    private void OnCantidadInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int cantidad))
+        {
+            if (cantidad > MaxCantidad)
+            {
+                NuevaEntradaDetalle.Cantidad = MaxCantidad;
+                toastService.ShowWarning($"La cantidad máxima permitida es {MaxCantidad} unidades. Se ha ajustado la cantidad.");
+            }
+            else if (cantidad < 0)
+            {
+                NuevaEntradaDetalle.Cantidad = 0;
+                toastService.ShowWarning("La cantidad no puede ser negativa.");
+            }
+            else
+            {
+                NuevaEntradaDetalle.Cantidad = cantidad;
+            }
+        }
+        else if (string.IsNullOrEmpty(e.Value?.ToString()))
+        {
+            NuevaEntradaDetalle.Cantidad = 0;
+        }
+        else
+        {
+            NuevaEntradaDetalle.Cantidad = 0;
+            toastService.ShowError("Por favor, ingrese un número válido para la cantidad.");
+        }
     }
 
     private void AgregarDetalle()
@@ -162,6 +221,12 @@
             return;
         }
 
+        if (NuevaEntradaDetalle.Cantidad > MaxCantidad)
+        {
+            NuevaEntradaDetalle.Cantidad = MaxCantidad;
+            toastService.ShowWarning($"La cantidad se ha ajustado a {MaxCantidad} porque excede el límite.");
+        }
+
         var productoSeleccionado = ProductosDisponibles.FirstOrDefault(p => p.ProductoId == NuevaEntradaDetalle.ProductoId);
 
         if (productoSeleccionado != null)
@@ -170,26 +235,33 @@
 
             if (detalleExistente == null)
             {
-                
                 Entrada.Detalle.Add(new EntradaDetalle
                     {
-                    
                         EntradaDetalleId = 0,
                         ProductoId = NuevaEntradaDetalle.ProductoId,
                         Cantidad = NuevaEntradaDetalle.Cantidad,
-                        PesoEntrada = productoSeleccionado.Peso, 
-                        Producto = productoSeleccionado 
+                        PesoEntrada = productoSeleccionado.Peso,
+                        Producto = productoSeleccionado
                     });
                 toastService.ShowSuccess("Detalle de producto agregado correctamente.");
             }
             else
             {
-                detalleExistente.Cantidad += NuevaEntradaDetalle.Cantidad;
-                toastService.ShowInfo($"Cantidad actualizada para {productoSeleccionado.Descripcion}.");
+                int nuevaCantidadTotal = detalleExistente.Cantidad + NuevaEntradaDetalle.Cantidad;
+                if (nuevaCantidadTotal > MaxCantidad)
+                {
+                    toastService.ShowWarning($"La cantidad total para {productoSeleccionado.Descripcion} ({nuevaCantidadTotal}) excede el límite de {MaxCantidad}. No se ha agregado la cantidad completa.");
+                    detalleExistente.Cantidad = MaxCantidad;
+                }
+                else
+                {
+                    detalleExistente.Cantidad = nuevaCantidadTotal;
+                    toastService.ShowInfo($"Cantidad actualizada para {productoSeleccionado.Descripcion}.");
+                }
             }
 
             CalcularPesoTotal();
-            ResetearDetalle(); 
+            ResetearDetalle();
         }
         else
         {
@@ -200,10 +272,8 @@
     private void ResetearDetalle()
     {
         NuevaEntradaDetalle = new EntradaDetalle();
-        
-        NuevaEntradaDetalle.ProductoId = ProductosDisponibles.FirstOrDefault()?.ProductoId ?? 0;
-        NuevaEntradaDetalle.Cantidad = 1; 
-        ActualizarPesoUnitarioParaDetalle(); 
+        NuevaEntradaDetalle.ProductoId = 0;
+        NuevaEntradaDetalle.Cantidad = 1;
     }
 
     private void ActualizarPesoUnitarioParaDetalle()
@@ -214,7 +284,14 @@
 
     private void OnProductoSelectionChanged()
     {
-        ActualizarPesoUnitarioParaDetalle();
+        if (NuevaEntradaDetalle.ProductoId != 0)
+        {
+            ActualizarPesoUnitarioParaDetalle();
+        }
+        else
+        {
+            NuevaEntradaDetalle.PesoEntrada = 0;
+        }
     }
 
     private async Task GuardarEntrada()
@@ -226,6 +303,12 @@
         }
 
         
+        if (Entrada.Fecha < MinDateAllowed)
+        {
+            toastService.ShowError("No se puede guardar la entrada. La fecha es anterior al 1 de enero de 2010.");
+            return;
+        }
+
         CalcularPesoTotal();
 
         var conceptoExistente = await entradasService.Listar(e => e.Concepto.ToLower() == Entrada.Concepto.ToLower());
@@ -253,11 +336,9 @@
     {
         Entrada.Detalle.Remove(detalle);
 
-        
         NuevaEntradaDetalle.ProductoId = detalle.ProductoId;
         NuevaEntradaDetalle.Cantidad = detalle.Cantidad;
-        ActualizarPesoUnitarioParaDetalle(); 
-        
+        ActualizarPesoUnitarioParaDetalle();
 
         CalcularPesoTotal();
         toastService.ShowInfo($"Detalle de {detalle.Producto?.Descripcion ?? "producto"} removido y listo para ser re-agregado.");
@@ -265,7 +346,6 @@
 
     private void CalcularPesoTotal()
     {
-        
-        Entrada.PesoTotal = Entrada.Detalle.Sum(d => (double)d.Cantidad * d.PesoEntrada) / 1000.0; 
+        Entrada.PesoTotal = Entrada.Detalle.Sum(d => (double)d.Cantidad * d.PesoEntrada) / 1000.0;
     }
 }
