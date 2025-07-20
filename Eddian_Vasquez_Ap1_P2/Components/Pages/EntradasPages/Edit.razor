@@ -1,12 +1,12 @@
 ﻿@page "/Entradas/EditEntrada/{EntradaId:int}"
- @using Blazored.Toast.Services
- @using Eddian_Vasquez_Ap1_p2.Models
- @using Eddian_Vasquez_Ap1_p2.Services
- @rendermode InteractiveServer
- @inject EntradasService entradasService
- @inject ProductosService productosService
- @inject NavigationManager navigationManager
- @inject IToastService toastService
+@using Blazored.Toast.Services
+@using Eddian_Vasquez_Ap1_p2.Models
+@using Eddian_Vasquez_Ap1_p2.Services
+@rendermode InteractiveServer
+@inject EntradasService entradasService
+@inject ProductosService productosService
+@inject NavigationManager navigationManager
+@inject IToastService toastService
 
 <PageTitle>Editar Entrada de Producto</PageTitle>
 
@@ -47,7 +47,7 @@
                 <hr class="my-4">
 
                 <div class="border border-success rounded p-4 mb-4">
-                    <h5 class="text-success mb-3">Entrada Detalle</h5>
+                    <h5 class="text-success mb-3">Detalles de la Entrada</h5>
 
                     <div class="row g-3 align-items-end mb-3">
                         <div class="col-md-5">
@@ -95,7 +95,7 @@
                                         <tr class="text-center">
                                             <td>@(detalle.Producto?.Descripcion ?? "Desconocido")</td>
                                             <td>@detalle.Cantidad</td>
-                                            <td>@((detalle.Cantidad * detalle.PesoEntrada).ToString("N2"))</td>
+                                            <td>@(((double)detalle.Cantidad * detalle.PesoEntrada / 1000.0).ToString("N2"))</td>
                                             <td>
                                                 <button type="button" @onclick="() => RemoverDetalle(detalle)" class="btn btn-outline-danger btn-sm">
                                                     <i class="bi bi-trash"></i> Eliminar
@@ -122,9 +122,9 @@
             </div>
 
             <div class="card-footer d-flex justify-content-center gap-2 p-3 bg-light">
-                <a href="/Entradas/IndexEntradas" class="btn btn-secondary px-4 py-2">
+                <button type="button" @onclick="CancelarYVolver" class="btn btn-secondary px-4 py-2">
                     <i class="bi bi-arrow-left me-2"></i> Volver
-                </a>
+                </button>
                 <button type="submit" class="btn btn-success px-4 py-2">
                     <i class="bi bi-floppy me-2"></i> Actualizar
                 </button>
@@ -167,9 +167,11 @@
     public List<Producto> ProductosDisponibles { get; set; } = new List<Producto>();
 
     private bool MostrarModalEliminar = false;
+    private string _conceptoOriginal = string.Empty; 
 
     protected override async Task OnInitializedAsync()
     {
+        
         ProductosDisponibles = await productosService.Listar(p => true);
 
         if (EntradaId > 0)
@@ -178,9 +180,10 @@
             if (entradaEncontrada != null)
             {
                 Entrada = entradaEncontrada;
-                CalcularPesoTotal();
+                _conceptoOriginal = Entrada.Concepto; 
+                CalcularPesoTotal(); 
 
-                // Asegúrate de que los objetos Producto estén cargados en los detalles si no lo están ya
+                
                 foreach (var detalle in Entrada.Detalle)
                 {
                     if (detalle.Producto == null)
@@ -188,7 +191,6 @@
                         detalle.Producto = ProductosDisponibles.FirstOrDefault(p => p.ProductoId == detalle.ProductoId);
                     }
                 }
-
             }
             else
             {
@@ -202,8 +204,13 @@
             navigationManager.NavigateTo("/Entradas/IndexEntradas");
         }
 
-        // Inicializa el ProductoId para el nuevo detalle si hay productos disponibles
-        NuevaEntradaDetalle.ProductoId = ProductosDisponibles.FirstOrDefault()?.ProductoId ?? 0;
+        
+        ResetearDetalle();
+    }
+
+    private async Task CancelarYVolver()
+    {
+        navigationManager.NavigateTo("/Entradas/IndexEntradas");
     }
 
     private void AgregarDetalle()
@@ -230,11 +237,11 @@
             {
                 Entrada.Detalle.Add(new EntradaDetalle
                     {
-                        EntradaDetalleId = 0, // Importante para que EF Core lo considere nuevo si la BD genera IDs
+                        EntradaDetalleId = 0,
                         ProductoId = NuevaEntradaDetalle.ProductoId,
                         Cantidad = NuevaEntradaDetalle.Cantidad,
-                        PesoEntrada = productoSeleccionado.Peso,
-                        Producto = productoSeleccionado // Asignar el objeto Producto para mostrar la descripción
+                        PesoEntrada = productoSeleccionado.Peso, 
+                        Producto = productoSeleccionado
                     });
                 toastService.ShowSuccess("Detalle de producto agregado correctamente.");
             }
@@ -257,11 +264,14 @@
     {
         NuevaEntradaDetalle = new EntradaDetalle();
         NuevaEntradaDetalle.ProductoId = ProductosDisponibles.FirstOrDefault()?.ProductoId ?? 0;
+        NuevaEntradaDetalle.Cantidad = 1; 
+        ActualizarPesoUnitarioParaDetalle(); 
     }
 
     private void ActualizarPesoUnitarioParaDetalle()
     {
         var productoSeleccionado = ProductosDisponibles.FirstOrDefault(p => p.ProductoId == NuevaEntradaDetalle.ProductoId);
+       
         NuevaEntradaDetalle.PesoEntrada = productoSeleccionado?.Peso ?? 0;
     }
 
@@ -270,11 +280,24 @@
         ActualizarPesoUnitarioParaDetalle();
     }
 
-    private async Task ActualizarEntrada() // Renamed from GuardarEntrada
+    private async Task ActualizarEntrada()
     {
         if (!Entrada.Detalle.Any())
         {
             toastService.ShowWarning("Debe agregar al menos un producto a la entrada.");
+            return;
+        }
+
+        CalcularPesoTotal(); 
+
+        var conceptoExistente = await entradasService.Listar(e =>
+            e.Concepto.ToLower() == Entrada.Concepto.ToLower() &&
+            e.EntradaId != Entrada.EntradaId);
+
+        if (conceptoExistente.Any())
+        {
+            toastService.ShowError("Ya existe otra entrada con este concepto. Por favor, utilice otro.");
+            Entrada.Concepto = _conceptoOriginal; 
             return;
         }
 
@@ -295,22 +318,28 @@
     private void RemoverDetalle(EntradaDetalle detalle)
     {
         Entrada.Detalle.Remove(detalle);
+
+        
+        NuevaEntradaDetalle.ProductoId = detalle.ProductoId;
+        NuevaEntradaDetalle.Cantidad = detalle.Cantidad;
+        ActualizarPesoUnitarioParaDetalle();
+
         CalcularPesoTotal();
-        toastService.ShowInfo("Detalle de producto removido.");
+        toastService.ShowInfo($"Detalle de {detalle.Producto?.Descripcion ?? "producto"} removido y listo para ser re-agregado.");
     }
 
     private void CalcularPesoTotal()
     {
-        Entrada.PesoTotal = Entrada.Detalle.Sum(d => d.Cantidad * d.PesoEntrada);
+        
+        Entrada.PesoTotal = Entrada.Detalle.Sum(d => (double)d.Cantidad * d.PesoEntrada) / 1000.0;
     }
 
     private async Task EliminarEntradaConfirmado()
     {
-        MostrarModalEliminar = false; // Oculta el modal
+        MostrarModalEliminar = false;
 
         if (Entrada.EntradaId > 0)
         {
-            // Asumiendo que EntradasService tiene un método Eliminar
             var eliminado = await entradasService.Eliminar(Entrada.EntradaId);
 
             if (eliminado)
@@ -328,4 +357,4 @@
             toastService.ShowError("No se encontró la entrada para eliminar.");
         }
     }
- }
+}

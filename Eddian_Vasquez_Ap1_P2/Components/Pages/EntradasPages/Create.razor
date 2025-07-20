@@ -95,7 +95,8 @@
                                         <tr class="text-center">
                                             <td>@(detalle.Producto?.Descripcion ?? "Desconocido")</td>
                                             <td>@detalle.Cantidad</td>
-                                            <td>@((detalle.Cantidad * detalle.PesoEntrada).ToString("N2"))</td>
+                                            
+                                            <td>@(((double)detalle.Cantidad * detalle.PesoEntrada / 1000.0).ToString("N2"))</td>
                                             <td>
                                                 <button type="button" @onclick="() => RemoverDetalle(detalle)" class="btn btn-outline-danger btn-sm">
                                                     <i class="bi bi-trash"></i> Eliminar
@@ -139,12 +140,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        
         ProductosDisponibles = await productosService.Listar(p => true);
         Entrada.Fecha = DateTime.Now;
-        // Establece el ProductoId predeterminado solo si hay productos disponibles
-        NuevaEntradaDetalle.ProductoId = ProductosDisponibles.FirstOrDefault()?.ProductoId ?? 0;
-        // Llama a ActualizarPesoUnitarioParaDetalle después de establecer el ProductoId inicial
-        ActualizarPesoUnitarioParaDetalle();
+
+        
+        ResetearDetalle();
     }
 
     private void AgregarDetalle()
@@ -169,12 +170,15 @@
 
             if (detalleExistente == null)
             {
+                
                 Entrada.Detalle.Add(new EntradaDetalle
                     {
+                    
+                        EntradaDetalleId = 0,
                         ProductoId = NuevaEntradaDetalle.ProductoId,
                         Cantidad = NuevaEntradaDetalle.Cantidad,
-                        PesoEntrada = productoSeleccionado.Peso,
-                        Producto = productoSeleccionado
+                        PesoEntrada = productoSeleccionado.Peso, 
+                        Producto = productoSeleccionado 
                     });
                 toastService.ShowSuccess("Detalle de producto agregado correctamente.");
             }
@@ -185,7 +189,7 @@
             }
 
             CalcularPesoTotal();
-            ResetearDetalle();
+            ResetearDetalle(); 
         }
         else
         {
@@ -196,9 +200,10 @@
     private void ResetearDetalle()
     {
         NuevaEntradaDetalle = new EntradaDetalle();
-        // Vuelve a establecer el ProductoId predeterminado después de resetear
+        
         NuevaEntradaDetalle.ProductoId = ProductosDisponibles.FirstOrDefault()?.ProductoId ?? 0;
-        ActualizarPesoUnitarioParaDetalle(); // Asegura que el peso unitario se actualice para el nuevo producto seleccionado por defecto
+        NuevaEntradaDetalle.Cantidad = 1; 
+        ActualizarPesoUnitarioParaDetalle(); 
     }
 
     private void ActualizarPesoUnitarioParaDetalle()
@@ -220,6 +225,16 @@
             return;
         }
 
+        
+        CalcularPesoTotal();
+
+        var conceptoExistente = await entradasService.Listar(e => e.Concepto.ToLower() == Entrada.Concepto.ToLower());
+        if (conceptoExistente.Any())
+        {
+            toastService.ShowError("Ya existe una entrada con este concepto. Por favor, utilice otro.");
+            return;
+        }
+
         var guardado = await entradasService.Guardar(Entrada);
 
         if (guardado)
@@ -237,12 +252,20 @@
     private void RemoverDetalle(EntradaDetalle detalle)
     {
         Entrada.Detalle.Remove(detalle);
+
+        
+        NuevaEntradaDetalle.ProductoId = detalle.ProductoId;
+        NuevaEntradaDetalle.Cantidad = detalle.Cantidad;
+        ActualizarPesoUnitarioParaDetalle(); 
+        
+
         CalcularPesoTotal();
-        toastService.ShowInfo("Detalle de producto removido.");
+        toastService.ShowInfo($"Detalle de {detalle.Producto?.Descripcion ?? "producto"} removido y listo para ser re-agregado.");
     }
 
     private void CalcularPesoTotal()
     {
-        Entrada.PesoTotal = Entrada.Detalle.Sum(d => d.Cantidad * d.PesoEntrada);
+        
+        Entrada.PesoTotal = Entrada.Detalle.Sum(d => (double)d.Cantidad * d.PesoEntrada) / 1000.0; 
     }
 }

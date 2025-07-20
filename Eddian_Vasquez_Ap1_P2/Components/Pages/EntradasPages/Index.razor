@@ -13,15 +13,14 @@
     <div class="card shadow-lg">
         <div class="card-header text-center">
             <h3 class="card-title fw-bold d-inline-block">Entradas de Productos</h3>
-            <a href="/Entradas/CreateEntrada" class="btn btn-success px-4 py-2 float-end">
-                <i class="bi bi-plus-square me-2"></i>Crear
-            </a>
+            
         </div>
 
         <div class="card-body p-3">
 
             <div class="row g-3 mb-3 align-items-end">
-                <div class="col-md-4 col-sm-12">
+                <div class="col-md-3 col-sm-12">
+                    
                     <label class="form-label">Filtrar por</label>
                     <InputSelect class="form-select" @bind-Value="MetodoBusqueda" @onchange="RestablecerBusquedaYFiltrar">
                         <option value="Id">Entrada Id</option>
@@ -30,7 +29,8 @@
                     </InputSelect>
                 </div>
 
-                <div class="col-md-5 col-sm-12">
+                <div class="col-md-4 col-sm-12">
+                    
                     <label class="form-label">Búsqueda</label>
                     <div class="input-group">
                         @if (MetodoBusqueda == "Id")
@@ -55,6 +55,13 @@
                     <button type="button" class="btn btn-outline-secondary" @onclick="RestablecerFiltros">
                         <i class="bi bi-arrow-counterclockwise"></i> Restablecer Filtros
                     </button>
+                </div>
+                <div class="col-md-2 col-sm-12">
+                   
+                    <a href="/Entradas/CreateEntrada" class="btn btn-success w-100 py-2">
+                        
+                        <i class="bi bi-plus-square me-2"></i>Crear
+                    </a>
                 </div>
             </div>
 
@@ -112,10 +119,10 @@
         <div class="card-footer">
             <div class="row">
                 <div class="col text-start">
-                    <span>Conteo de Entradas:</span> @NumeroEntradas
+                    <span>Conteo:</span> @NumeroEntradas
                 </div>
                 <div class="col text-end">
-                    <span>Peso Total Acumulado:</span> @PesoTotalAcumulado.ToString("N2") Kg
+                    <span>Peso Total:</span> @PesoTotalAcumulado.ToString("N2") Kg
                 </div>
             </div>
         </div>
