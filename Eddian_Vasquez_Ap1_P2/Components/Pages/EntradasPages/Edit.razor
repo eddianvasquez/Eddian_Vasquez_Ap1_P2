@@ -167,11 +167,12 @@
     public List<Producto> ProductosDisponibles { get; set; } = new List<Producto>();
 
     private bool MostrarModalEliminar = false;
-    private string _conceptoOriginal = string.Empty; 
+    private string _conceptoOriginal = string.Empty;
+
+    private const int MaximaCantidad = 750; // Define la cantidad máxima
 
     protected override async Task OnInitializedAsync()
     {
-        
         ProductosDisponibles = await productosService.Listar(p => true);
 
         if (EntradaId > 0)
@@ -180,10 +181,10 @@
             if (entradaEncontrada != null)
             {
                 Entrada = entradaEncontrada;
-                _conceptoOriginal = Entrada.Concepto; 
-                CalcularPesoTotal(); 
+                _conceptoOriginal = Entrada.Concepto;
+                CalcularPesoTotal();
 
-                
+                // Asegurar que los productos estén cargados en los detalles existentes
                 foreach (var detalle in Entrada.Detalle)
                 {
                     if (detalle.Producto == null)
@@ -204,7 +205,7 @@
             navigationManager.NavigateTo("/Entradas/IndexEntradas");
         }
 
-        
+        // Establecer valores predeterminados para el nuevo detalle
         ResetearDetalle();
     }
 
@@ -227,6 +228,14 @@
             return;
         }
 
+        // Validar la cantidad máxima ANTES de procesar
+        if (NuevaEntradaDetalle.Cantidad > MaximaCantidad)
+        {
+            toastService.ShowWarning($"No se puede agregar el detalle. La cantidad máxima permitida es {MaximaCantidad}.");
+            NuevaEntradaDetalle.Cantidad = MaximaCantidad; // Establecer el campo de cantidad a 750
+            return; // Detener el procesamiento aquí, no agregar ni actualizar el detalle
+        }
+
         var productoSeleccionado = ProductosDisponibles.FirstOrDefault(p => p.ProductoId == NuevaEntradaDetalle.ProductoId);
 
         if (productoSeleccionado != null)
@@ -240,19 +249,30 @@
                         EntradaDetalleId = 0,
                         ProductoId = NuevaEntradaDetalle.ProductoId,
                         Cantidad = NuevaEntradaDetalle.Cantidad,
-                        PesoEntrada = productoSeleccionado.Peso, 
+                        PesoEntrada = productoSeleccionado.Peso,
                         Producto = productoSeleccionado
                     });
                 toastService.ShowSuccess("Detalle de producto agregado correctamente.");
             }
             else
             {
-                detalleExistente.Cantidad += NuevaEntradaDetalle.Cantidad;
-                toastService.ShowInfo($"Cantidad actualizada para {productoSeleccionado.Descripcion}.");
+                // Si el producto ya existe, aún necesitamos verificar si agregar más excedería el límite.
+                // Si lo hace, prevenimos la adición y mostramos una advertencia.
+                if (detalleExistente.Cantidad + NuevaEntradaDetalle.Cantidad > MaximaCantidad)
+                {
+                    toastService.ShowWarning($"No se puede agregar más cantidad. El total para {productoSeleccionado.Descripcion} no puede exceder {MaximaCantidad}.");
+                    NuevaEntradaDetalle.Cantidad = MaximaCantidad; // Restablecer la entrada a 750
+                    return; // Detener aquí, no actualizar el detalle existente
+                }
+                else
+                {
+                    detalleExistente.Cantidad += NuevaEntradaDetalle.Cantidad;
+                    toastService.ShowInfo($"Cantidad actualizada para {productoSeleccionado.Descripcion}.");
+                }
             }
 
             CalcularPesoTotal();
-            ResetearDetalle();
+            ResetearDetalle(); // Restablecer para la siguiente entrada solo si se agregó/actualizó con éxito
         }
         else
         {
@@ -263,16 +283,24 @@
     private void ResetearDetalle()
     {
         NuevaEntradaDetalle = new EntradaDetalle();
-        NuevaEntradaDetalle.ProductoId = ProductosDisponibles.FirstOrDefault()?.ProductoId ?? 0;
-        NuevaEntradaDetalle.Cantidad = 1; 
-        ActualizarPesoUnitarioParaDetalle(); 
+        // Establecer ProductoId en 0 para que "--- Seleccione un Producto ---" sea el valor predeterminado
+        NuevaEntradaDetalle.ProductoId = 0;
+        NuevaEntradaDetalle.Cantidad = 1; // Cantidad predeterminada para nuevas entradas
+        ActualizarPesoUnitarioParaDetalle();
     }
 
     private void ActualizarPesoUnitarioParaDetalle()
     {
-        var productoSeleccionado = ProductosDisponibles.FirstOrDefault(p => p.ProductoId == NuevaEntradaDetalle.ProductoId);
-       
-        NuevaEntradaDetalle.PesoEntrada = productoSeleccionado?.Peso ?? 0;
+        // Solo actualizar si se selecciona un producto (ProductoId != 0)
+        if (NuevaEntradaDetalle.ProductoId != 0)
+        {
+            var productoSeleccionado = ProductosDisponibles.FirstOrDefault(p => p.ProductoId == NuevaEntradaDetalle.ProductoId);
+            NuevaEntradaDetalle.PesoEntrada = productoSeleccionado?.Peso ?? 0;
+        }
+        else
+        {
+            NuevaEntradaDetalle.PesoEntrada = 0; // Reiniciar el peso si no hay producto seleccionado
+        }
     }
 
     private void OnProductoSelectionChanged()
@@ -288,17 +316,21 @@
             return;
         }
 
-        CalcularPesoTotal(); 
+        CalcularPesoTotal();
 
-        var conceptoExistente = await entradasService.Listar(e =>
-            e.Concepto.ToLower() == Entrada.Concepto.ToLower() &&
-            e.EntradaId != Entrada.EntradaId);
-
-        if (conceptoExistente.Any())
+        // Solo verificar si el concepto ha cambiado
+        if (Entrada.Concepto.ToLower() != _conceptoOriginal.ToLower())
         {
-            toastService.ShowError("Ya existe otra entrada con este concepto. Por favor, utilice otro.");
-            Entrada.Concepto = _conceptoOriginal; 
-            return;
+            var conceptoExistente = await entradasService.Listar(e =>
+                e.Concepto.ToLower() == Entrada.Concepto.ToLower() &&
+                e.EntradaId != Entrada.EntradaId);
+
+            if (conceptoExistente.Any())
+            {
+                toastService.ShowError("Ya existe otra entrada con este concepto. Por favor, utilice otro.");
+                Entrada.Concepto = _conceptoOriginal;
+                return;
+            }
         }
 
         var actualizada = await entradasService.Guardar(Entrada);
@@ -306,7 +338,7 @@
         if (actualizada)
         {
             toastService.ShowSuccess("Entrada actualizada correctamente.");
-            await Task.Delay(500);
+            await Task.Delay(500); // Pequeño retraso para que el usuario vea el mensaje
             navigationManager.NavigateTo("/Entradas/IndexEntradas");
         }
         else
@@ -319,18 +351,18 @@
     {
         Entrada.Detalle.Remove(detalle);
 
-        
+        // Restablecer la sección de "agregar detalle" con la información del elemento removido
+        // Esto facilita volver a agregarlo o ajustarlo si se eliminó por error
         NuevaEntradaDetalle.ProductoId = detalle.ProductoId;
         NuevaEntradaDetalle.Cantidad = detalle.Cantidad;
         ActualizarPesoUnitarioParaDetalle();
 
         CalcularPesoTotal();
-        toastService.ShowInfo($"Detalle de {detalle.Producto?.Descripcion ?? "producto"} removido y listo para ser re-agregado.");
+        toastService.ShowInfo($"Detalle de {detalle.Producto?.Descripcion ?? "producto"} removido. Puede re-agregarlo o ajustar.");
     }
 
     private void CalcularPesoTotal()
     {
-        
         Entrada.PesoTotal = Entrada.Detalle.Sum(d => (double)d.Cantidad * d.PesoEntrada) / 1000.0;
     }
 
